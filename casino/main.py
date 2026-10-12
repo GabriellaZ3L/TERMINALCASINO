@@ -6,7 +6,9 @@ from .accounts import Account
 from .config import Config
 from .types import GameContext
 from .utils import cprint, cinput, clear_screen, display_topbar, get_theme
-
+from textual.app import App, ComposeResult
+from textual.containers import Container
+from textual.widgets import Button, Input, Static
 
 CASINO_HEADER = """
 ┌──────────────────────────────────────┐
@@ -19,6 +21,61 @@ CASINO_HEADER_OPTIONS = {
     "margin": 3,
 }
 ACCOUNT_STARTING_BALANCE = 100
+
+class CasinoHome(App):
+
+    # Implements the CSS and the homepage where the user can enter name, then a button per game.
+    # Clicking on button opens up a game.
+    CSS="""
+    Screen {align: center middle;}
+    #header {width: auto; color: gold; text-style: bold;}
+    #name-input {width: 40; border: tall gold;}
+    #name-input:focus {border: tall gold;}
+    #welcome {width: auto; color: gold; margin-bottom: 1;}
+    #games {layout: grid; grid-size: 2; grid-gutter: 1; width: 60; height: auto;}
+    #games Button {width: 100%;}
+    """
+
+    # Empty player name for later
+    player_name= ""
+
+    def compose(self) -> ComposeResult:
+        self.welcome= Static("", id="welcome")
+        self.games_box= Container(id="games")
+        return [
+            # Creates a welcome message
+            self.welcome,
+            # Creates a header
+            Static(CASINO_HEADER, id="header"),
+            # The welcome message
+            Static("", id="welcome"),
+            # The name input area
+            Input(placeholder="Enter your name", id="name-input"),
+            # And the holder for the buttons
+            Container(id="games"),
+            # To fill in the games later
+            self.games_box,
+        ]
+
+    def onSubmitted(self, event: Input.Submitted) -> None:
+        # When enter is spaced in name box
+        name= event.value.strip()
+        # If there is no name don't proceed
+        if not name:
+            return
+
+        # Save name and get rid of the input box
+        self.player_name= name
+        event.input.remove()
+        # Welcome message
+        self.welcome.update(f"Welcome, {name}! Please choose a game:")
+        # Buttons
+        for game in ALL_GAMES:
+            self.games_box.mount(*[Button(game.title(), name=game)])
+
+    # When a button is pressed, open up the game
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        self.exit((self.player_name, event.button.name))
 
 ENTER_OR_QUIT_PROMPT = "[E]nter   [Q]uit: "
 INVALID_CHOICE_PROMPT = "\nInvalid input. Please try again.\n"
@@ -156,7 +213,20 @@ def main():
 
 if __name__ == "__main__":
     try:
-        main()
+        # Show textual homepage
+        result= CasinoHome().run()
+        # Player quits without putting anything in, exit
+        if result is None:
+            raise SystemExit
+
+        # Name and game pair
+        name, game= result
+
+        # Sets up what the games need
+        account= Account.generate(name, ACCOUNT_STARTING_BALANCE)
+        ctx= GameContext(account=account, config=Config.default())
+        clear_screen()
+        GAME_HANDLERS[game](ctx)
     except (KeyboardInterrupt, EOFError):
         clear_screen()
         display_topbar(account=None, **CASINO_HEADER_OPTIONS)
