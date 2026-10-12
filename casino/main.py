@@ -43,21 +43,17 @@ class CasinoHome(App):
         self.welcome= Static("", id="welcome")
         self.games_box= Container(id="games")
         return [
-            # Creates a welcome message
-            self.welcome,
             # Creates a header
             Static(CASINO_HEADER, id="header"),
-            # The welcome message
-            Static("", id="welcome"),
+            # Creates a welcome message
+            self.welcome,
             # The name input area
             Input(placeholder="Enter your name", id="name-input"),
             # And the holder for the buttons
-            Container(id="games"),
-            # To fill in the games later
             self.games_box,
         ]
 
-    def onSubmitted(self, event: Input.Submitted) -> None:
+    def on_input_submitted(self, event: Input.Submitted) -> None:
         # When enter is spaced in name box
         name= event.value.strip()
         # If there is no name don't proceed
