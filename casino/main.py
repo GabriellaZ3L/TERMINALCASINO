@@ -27,13 +27,35 @@ class CasinoHome(App):
     # Implements the CSS and the homepage where the user can enter name, then a button per game.
     # Clicking on button opens up a game.
     CSS="""
-    Screen {align: center middle;}
-    #header {width: auto; color: gold; text-style: bold;}
-    #name-input {width: 40; border: tall gold;}
-    #name-input:focus {border: tall gold;}
-    #welcome {width: auto; color: gold; margin-bottom: 1;}
-    #games {layout: grid; grid-size: 2; grid-gutter: 1; width: 60; height: auto;}
-    #games Button {width: 100%;}
+    Screen {
+        align: center middle;
+    }
+    #header {
+        width: auto; 
+        color: gold; 
+        text-style: bold;
+        }
+    #name-input {
+        width: 40; 
+        border: tall gold;
+        }
+    #name-input:focus {
+        border: tall gold;
+        }
+    #welcome {
+        width: auto; 
+        color: gold; 
+        margin-bottom: 1;
+        }
+    #games {
+        layout: grid; 
+        grid-size: 2; 
+        grid-gutter: 1; width: 60; 
+        height: auto;
+        }
+    #games Button {
+        width: 100%;
+        }
     """
 
     # Empty player name for later
