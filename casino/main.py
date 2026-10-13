@@ -7,13 +7,8 @@ from .config import Config
 from .types import GameContext
 from .utils import cprint, cinput, clear_screen, display_topbar, get_theme
 from textual.app import App, ComposeResult
-from textual.widgets import Footer, Header, Input, Label,SelectionList, Static, ContentSwitcher, Button
-from textual import on
-from textual.containers import Horizontal
-from textual.widgets.selection_list import Selection
-
-
-
+from textual.containers import Container
+from textual.widgets import Button, Input, Static
 
 CASINO_HEADER = """
 ┌──────────────────────────────────────┐
@@ -26,6 +21,79 @@ CASINO_HEADER_OPTIONS = {
     "margin": 3,
 }
 ACCOUNT_STARTING_BALANCE = 100
+
+class CasinoHome(App):
+
+    # Implements the CSS and the homepage where the user can enter name, then a button per game.
+    # Clicking on button opens up a game.
+    CSS="""
+    Screen {
+        align: center middle;
+    }
+    #header {
+        width: auto; 
+        color: gold; 
+        text-style: bold;
+        }
+    #name-input {
+        width: 40; 
+        border: tall gold;
+        }
+    #name-input:focus {
+        border: tall gold;
+        }
+    #welcome {
+        width: auto; 
+        color: gold; 
+        margin-bottom: 1;
+        }
+    #games {
+        layout: grid; 
+        grid-size: 2; 
+        grid-gutter: 1; width: 60; 
+        height: auto;
+        }
+    #games Button {
+        width: 100%;
+        }
+    """
+
+    # Empty player name for later
+    player_name= ""
+
+    def compose(self) -> ComposeResult:
+        self.welcome= Static("", id="welcome")
+        self.games_box= Container(id="games")
+        return [
+            # Creates a header
+            Static(CASINO_HEADER, id="header"),
+            # Creates a welcome message
+            self.welcome,
+            # The name input area
+            Input(placeholder="Enter your name", id="name-input"),
+            # And the holder for the buttons
+            self.games_box,
+        ]
+
+    def on_input_submitted(self, event: Input.Submitted) -> None:
+        # When enter is selected in name box
+        name= event.value.strip()
+        # If there is no name don't proceed
+        if not name:
+            return
+
+        # Save name and get rid of the input box
+        self.player_name= name
+        event.input.remove()
+        # Welcome message
+        self.welcome.update(f"Welcome, {name}! Please choose a game:")
+        # Buttons
+        for game in ALL_GAMES:
+            self.games_box.mount(*[Button(game.title(), name=game)])
+
+    # When a button is pressed, open up the game
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        self.exit((self.player_name, event.button.name))
 
 ENTER_OR_QUIT_PROMPT = "[E]nter   [Q]uit: "
 INVALID_CHOICE_PROMPT = "\nInvalid input. Please try again.\n"
@@ -73,141 +141,6 @@ def prompt_with_refresh(
         if validator(answer):
             return answer
         last_error = error_message
-
-
-class NameSelect(App):
-    
-    CSS = """
-    #title {
-        text-align: center;
-        width: 100%;
-        color: gold;
-        text-style: bold;
-        margin-top: 2;
-
-    }
-    """
-    def compose(self) -> ComposeResult:
-        self.title = "Terminal Casino"
-        yield Header()
-        yield Footer()
-        yield Static("♦ T E R M I N A L  C A S I N O ♦", id="title")
-
-
-        yield Input(placeholder="Enter Your Name",type="text", id="name-input")
-
-
-
-    def on_input_submitted(self, event: Input.Submitted) -> None:
-        name = event.value.strip()
-        if name:
-            self.notify(f"Welcome, {name}")
-            self.query_one("#name-input").remove()
-            self.exit(name)
-
-       
-
-
-class GameSelect(App):
-    CSS = """
-    #title {
-        text-align: center;
-        width: 100%;
-        color: gold;
-        text-style: bold;
-        margin-top: 2;
-
-    }
-    #subtitle {
-        text-align: center;
-        width: 100%;
-        color: cyan;
-        text-style: bold;
-    }
-    #enter{
-
-        text-align: center;
-        color:white;
-        background:black;
-
-    }
-    Horizontal{
-    
-    align: center middle;
-    }
-    
-    """
-    def __init__(self, username: str):
-        super().__init__()
-        self.username = username
-    
-    def compose(self) -> ComposeResult:
-        self.title = "Terminal Casino"
-        yield Header()
-        yield Static("♦ T E R M I N A L  C A S I N O ♦", id="title")
-        yield Static(f"Welcome {self.username}!",id="subtitle")
-        with Horizontal():
-            for i, name in enumerate(ALL_GAMES, start=1):
-                yield Button(name.title(), id=f"g{i}")
-    def on_button_pressed(self, event: Button.Pressed) -> None:
-        self.exit(str(event.button.id))
-
-class MenuSelect(App):
-    CSS = """
-    #title {
-        text-align: center;
-        width: 100%;
-        color: gold;
-        text-style: bold;
-        margin-top: 2;
-
-    }
-    #subtitle {
-        text-align: center;
-        width: 100%;
-        color: cyan;
-        text-style: bold;
-    }
-    #enter{
-
-        text-align: center;
-        color:white;
-        background:green;
-
-    }
-    #exit{
-
-        text-align: center;
-        color:white;
-        background:red;
-
-    }
-    Horizontal{
-        align: center middle;
-    }
-    
-    """
-    def __init__(self, username: str):
-        super().__init__()
-        self.username = username
-    
-    def compose(self) -> ComposeResult:
-        self.title = "Terminal Casino"
-        yield Header()
-        yield Static("♦ T E R M I N A L  C A S I N O ♦", id="title")
-        yield Static(f"Welcome {self.username}!",id="subtitle")
-        with Horizontal():
-            yield Button("Enter", id="enter")
-            yield Button("Exit", id="exit")
-
-    def on_button_pressed(self, event: Button.Pressed) -> None:
-        self.exit(str(event.button.id))
-
-
-
-
-
-
 
 def main_menu(ctx: GameContext) -> None:
     """
@@ -292,37 +225,20 @@ def main(name: str):
 
 if __name__ == "__main__":
     try:
+        # Show textual homepage
+        result= CasinoHome().run()
+        # Player quits without putting anything in, exit
+        if result is None:
+            raise SystemExit
 
-        name = ""
-        app = NameSelect() #username select
-        name = app.run()
-        account = Account.generate(name, ACCOUNT_STARTING_BALANCE)
-        config = Config.default()
-        ctx = GameContext(account=account, config=config)
-        while True:
-        
-            app = MenuSelect(username=name) #Quit or Enter the Casino
+        # Name and game pair
+        name, game= result
 
-            step = app.run()
-
-            if(step == "exit"):
-                exit()
-
-
-            app = GameSelect(username=name) #Select Game Mode
-            
-            iden = app.run()
-
-            print(f"selected {iden}")
-            choice = int(iden[1:])
-
-            selected_game = ALL_GAMES[int(choice) - 1] #Go to Desired Game
-            handler = GAME_HANDLERS.get(selected_game)
-            clear_screen()
-            handler(ctx)  # returns to loop after game finishes
-
-
-
+        # Sets up what the games need
+        account= Account.generate(name, ACCOUNT_STARTING_BALANCE)
+        ctx= GameContext(account=account, config=Config.default())
+        clear_screen()
+        GAME_HANDLERS[game](ctx)
     except (KeyboardInterrupt, EOFError):
         clear_screen()
         display_topbar(account=None, **CASINO_HEADER_OPTIONS)
