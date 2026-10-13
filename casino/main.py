@@ -76,7 +76,7 @@ class CasinoHome(App):
         ]
 
     def on_input_submitted(self, event: Input.Submitted) -> None:
-        # When enter is spaced in name box
+        # When enter is selected in name box
         name= event.value.strip()
         # If there is no name don't proceed
         if not name:
